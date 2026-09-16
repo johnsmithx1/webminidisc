@@ -8,8 +8,6 @@ import { useShallowEqualSelector } from '../frontend-utils';
 import { makeStyles } from 'tss-react/mui';
 import FormControl from '@mui/material/FormControl';
 import FormHelperText from '@mui/material/FormHelperText';
-import Alert from '@mui/material/Alert';
-import Tooltip from '@mui/material/Tooltip';
 import Link from '@mui/material/Link';
 import IconButton from '@mui/material/IconButton';
 
@@ -19,7 +17,6 @@ import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 
 import { TopMenu } from './topmenu';
 import ChromeIconPath from '../images/chrome-icon.svg';
-import { W95Welcome } from './win95/welcome';
 
 import SplitButton, { OptionType } from './split-button';
 import {
@@ -66,10 +63,6 @@ const useStyles = makeStyles()((theme) => ({
     spacing: {
         marginTop: theme.spacing(1),
     },
-    notice: {
-        marginTop: theme.spacing(2),
-        backgroundColor: 'unset',
-    },
     chromeLogo: {
         marginTop: theme.spacing(1),
         width: 96,
@@ -108,7 +101,6 @@ export const Welcome = () => {
         availableServices,
         pairingFailed,
         pairingMessage,
-        vintageMode,
         lastSelectedService,
         connectingInProgress,
     } = useShallowEqualSelector((state) => state.appState);
@@ -136,18 +128,6 @@ export const Welcome = () => {
         event.preventDefault();
         dispatch(appActions.setBrowserSupported(true));
     };
-
-    if (vintageMode) {
-        const p = {
-            dispatch,
-            pairingFailed,
-            pairingMessage,
-            createService: () => createService(availableServices[lastSelectedService]) ?? null,
-            spec: getServiceSpec(availableServices[lastSelectedService])!,
-            connectName: getConnectButtonName(availableServices[lastSelectedService]),
-        };
-        return <W95Welcome {...p}></W95Welcome>;
-    }
 
     const options: OptionType[] = availableServices.map((n, i) => ({
         name: getConnectButtonName(n),
@@ -251,11 +231,6 @@ export const Welcome = () => {
                                     <FormControl error={true} className={classes.spacing} style={{ visibility: pairingFailed ? 'visible' : 'hidden' }}>
                                         <FormHelperText>{pairingMessage}</FormHelperText>
                                     </FormControl>
-                                    {!window.native?.interface && (
-                                        <Tooltip title={<span>Vivaldi's WebUSB implementation is unreliable. Please use another Chromium based browser.</span>}>
-                                            <Alert severity="info" className={classes.notice}><b>Vivaldi browser notice</b></Alert>
-                                        </Tooltip>
-                                    )}
                                 </>
                             ) : (
                                 <div className="studio-browser-warning">

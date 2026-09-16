@@ -1,3 +1,4 @@
+// MiniDisc Studio fork: remove the low-use Retro Mode entry and route, 2026-09-16.
 import React, { useCallback } from 'react';
 import { useDispatch, batchActions, useDeviceCapabilities } from '../frontend-utils';
 
@@ -30,7 +31,6 @@ import InfoIcon from '@mui/icons-material/Info';
 import ToggleOffIcon from '@mui/icons-material/ToggleOff';
 import ToggleOnIcon from '@mui/icons-material/ToggleOn';
 import MusicNoteIcon from '@mui/icons-material/MusicNote';
-import Win95Icon from '../images/win95/win95.png';
 import HelpIcon from '@mui/icons-material/Help';
 import SettingsIcon from '@mui/icons-material/Settings';
 import GetAppIcon from '@mui/icons-material/GetApp';
@@ -43,7 +43,6 @@ import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
 import StorageIcon from '@mui/icons-material/Storage';
 import CodeIcon from '@mui/icons-material/Code';
 
-import { W95TopMenu } from './win95/topmenu';
 import { ExploitCapability } from '../services/interfaces/netmd';
 
 import {
@@ -73,7 +72,7 @@ export const TopMenu = function (props: { tracksSelected?: number[]; onClick?: (
     const { classes } = useStyles();
     const dispatch = useDispatch();
 
-    const { mainView, vintageMode, factoryModeRippingInMainUi, factoryModeShortcuts } = useShallowEqualSelector((state) => state.appState);
+    const { mainView, factoryModeRippingInMainUi, factoryModeShortcuts } = useShallowEqualSelector((state) => state.appState);
     const { disc } = useShallowEqualSelector((state) => state.main);
     const { spUploadSpeedupActive, deviceDiscSwapDetectionDisabled } = useShallowEqualSelector((state) => state.factory);
     const discTitle = useShallowEqualSelector((state) => state.main.disc?.title ?? ``);
@@ -106,10 +105,6 @@ export const TopMenu = function (props: { tracksSelected?: number[]; onClick?: (
         },
         [setShortcutsAnchorEl, dispatch]
     );
-
-    const handleVintageMode = useCallback(() => {
-        dispatch(appActions.setVintageMode(!vintageMode));
-    }, [dispatch, vintageMode]);
 
     const handleShortcutsClose = useCallback(() => {
         setShortcutsAnchorEl(null);
@@ -498,15 +493,6 @@ export const TopMenu = function (props: { tracksSelected?: number[]; onClick?: (
             <ListItemText>Settings</ListItemText>
         </MenuItem>
     );
-    menuItems.push(
-        <MenuItem key="vintageMode" onClick={handleVintageMode}>
-            <ListItemIcon className={classes.listItemIcon}>
-                <img alt="Windows 95" src={Win95Icon} width="24px" height="24px" />
-            </ListItemIcon>
-            <ListItemText>Retro Mode (beta)</ListItemText>
-        </MenuItem>
-    );
-
     if (mainView === 'MAIN') {
         if (isShiftDown) {
             menuItems.push(
@@ -591,20 +577,6 @@ export const TopMenu = function (props: { tracksSelected?: number[]; onClick?: (
         </MenuItem>
     );
 
-    if (vintageMode) {
-        const p = {
-            mainView,
-            onClick: props.onClick,
-            handleWipeDisc,
-            handleRefresh,
-            handleRenameDisc,
-            handleExit,
-            handleShowAbout,
-            handleShowChangelog,
-            handleVintageMode,
-        };
-        return <W95TopMenu {...p} />;
-    }
     return (
         <React.Fragment>
             <IconButton aria-label="actions" aria-controls="actions-menu" aria-haspopup="true" onClick={handleMenuOpen}>

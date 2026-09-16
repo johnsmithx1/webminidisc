@@ -1,3 +1,4 @@
+// MiniDisc Studio fork: keep legacy Retro Mode preference disabled, 2026-09-16.
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { enableBatching } from 'redux-batched-actions';
 import { CustomParameters } from '../custom-parameters';
@@ -49,7 +50,7 @@ export const buildInitialState = (): AppState => {
         runningChrome: true,
         connectingInProgress: false,
         colorTheme: loadPreference('colorTheme', 'system'),
-        vintageMode: loadPreference('vintageMode', false),
+        vintageMode: false,
         changelogDialogVisible: false,
         aboutDialogVisible: false,
         discProtectedDialogVisible: false,
@@ -113,10 +114,6 @@ export const slice = createSlice({
         },
         setNotificationSupport: (state, action: PayloadAction<boolean>) => {
             state.hasNotificationSupport = action.payload;
-        },
-        setVintageMode: (state, action: PayloadAction<boolean>) => {
-            state.vintageMode = action.payload;
-            savePreference('vintageMode', action.payload);
         },
         showAboutDialog: (state, action: PayloadAction<boolean>) => {
             state.aboutDialogVisible = action.payload;

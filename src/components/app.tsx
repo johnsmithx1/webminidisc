@@ -12,12 +12,12 @@ import Paper from '@mui/material/Paper';
 import Typography from '@mui/material/Typography';
 import Link from '@mui/material/Link';
 import Box from '@mui/material/Box';
-import { W95App } from './win95/app';
 import './studio-theme.css';
 
 const Toc = lazy(() => import('./factory/factory'));
 const Controls = lazy(() => import('./controls'));
 const Welcome = lazy(() => import('./welcome'));
+const StudioDemo = lazy(() => import('./studio-demo'));
 const Main = lazy(() => import('./main'));
 const useStyles = makeStyles()((theme) => ({
     layout: {
@@ -236,6 +236,7 @@ const InternalApp = () => {
     const { mainView, loading, pageFullHeight, pageFullWidth } = useShallowEqualSelector((state) => state.appState);
     const { deviceCapabilities } = useShallowEqualSelector((state) => state.main);
     const { classes, cx } = useStyles();
+    const showStudioDemo = import.meta.env.DEV && new URLSearchParams(window.location.search).get('demo') === '1';
 
     return (
         <React.Fragment>
@@ -266,7 +267,7 @@ const InternalApp = () => {
                             [classes.paperFullHeight]: pageFullHeight,
                         })}
                     >
-                        {mainView === 'WELCOME' ? <Welcome /> : null}
+                        {mainView === 'WELCOME' ? (showStudioDemo ? <StudioDemo /> : <Welcome />) : null}
                         {mainView === 'MAIN' ? <Main /> : null}
                         {mainView === 'FACTORY' ? <Toc /> : null}
 
@@ -297,7 +298,7 @@ const InternalApp = () => {
 };
 
 const App = () => {
-    const { colorTheme, vintageMode } = useShallowEqualSelector((state) => state.appState);
+    const { colorTheme } = useShallowEqualSelector((state) => state.appState);
     const systemIsDarkTheme = useThemeDetector();
 
     const theme = useMemo(() => {
@@ -310,10 +311,6 @@ const App = () => {
                 return systemIsDarkTheme ? darkTheme : lightTheme;
         }
     }, [systemIsDarkTheme, colorTheme]);
-
-    if (vintageMode) {
-        return <W95App />;
-    }
 
     return (
         <ThemeProvider theme={theme}>
