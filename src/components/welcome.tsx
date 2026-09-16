@@ -6,12 +6,10 @@ import { deleteService, pair } from '../redux/actions';
 import { useShallowEqualSelector } from '../frontend-utils';
 
 import { makeStyles } from 'tss-react/mui';
-import Typography from '@mui/material/Typography';
 import FormControl from '@mui/material/FormControl';
 import FormHelperText from '@mui/material/FormHelperText';
 import Alert from '@mui/material/Alert';
 import Tooltip from '@mui/material/Tooltip';
-import Box from '@mui/material/Box';
 import Link from '@mui/material/Link';
 import IconButton from '@mui/material/IconButton';
 
@@ -101,7 +99,7 @@ const useStyles = makeStyles()((theme) => ({
     },
 }));
 
-export const Welcome = (props: {}) => {
+export const Welcome = () => {
     const { classes } = useStyles();
     const dispatch = useDispatch();
     const {
@@ -204,119 +202,95 @@ export const Welcome = (props: {}) => {
 
     return (
         <React.Fragment>
-            <Box className={classes.headBox}>
-                <Typography component="h1" variant="h4">
-                    MiniDisc Studio
-                </Typography>
-                <TopMenu />
-            </Box>
-            <Typography component="h2" variant="body2">
-                A neon workspace for your NetMD collection
-            </Typography>
-            <Box className={classes.main}>
-                {browserSupported ? (
-                    <React.Fragment>
-                        <div className={classes.connectContainer}>
-                            <Typography component="h2" variant="subtitle1" align="center" className={classes.spacing}>
-                                Press the button to connect to a NetMD device
-                            </Typography>
+            <div className="studio-welcome">
+                <div className="studio-welcome-toolbar">
+                    <div>
+                        <div className="studio-eyebrow">MINIDISC / DIGITAL AUDIO SYSTEM</div>
+                        <div className="studio-welcome-title">Make a little noise.</div>
+                    </div>
+                    <TopMenu />
+                </div>
 
-                            <SplitButton
-                                options={options}
-                                color="primary"
-                                boxClassName={classes.buttonBox}
-                                width={200}
-                                disabled={Services[lastSelectedService].requiresChrome && !runningChrome}
-                                selectedIndex={lastSelectedService}
-                                dropdownMapping={mapToEntry}
-                                loading={connectingInProgress}
-                            />
+                <div className="studio-dashboard-grid">
+                    <section className="studio-hero-panel">
+                        <div className="studio-hero-copy">
+                            <div className="studio-live-label"><span className="studio-status-dot" /> DEVICE BAY / STANDBY</div>
+                            <div className="studio-display-title">Your next mix,<br /><em>etched in light.</em></div>
+                            <p>Connect a NetMD deck to move music between your collection and the disc.</p>
+                        </div>
+                        <div className="studio-disc-stage" aria-hidden="true">
+                            <div className="studio-disc-orbit studio-disc-orbit-one" />
+                            <div className="studio-disc-orbit studio-disc-orbit-two" />
+                            <div className="studio-disc-art"><div className="studio-disc-center"><span>MD</span><small>STUDIO EDITION</small></div></div>
+                            <div className="studio-disc-tag studio-disc-tag-left">ATRAC / PCM<br /><b>AUDIO ENGINE</b></div>
+                            <div className="studio-disc-tag studio-disc-tag-right">NETMD<br /><b>TRANSFER LINK</b></div>
+                        </div>
+                        <div className="studio-hero-bottom">
+                            <span>01 <b>TRANSFER</b></span><span>02 <b>RECORD</b></span><span>03 <b>ARCHIVE</b></span>
+                            <svg className="studio-wave-line" viewBox="0 0 250 34" preserveAspectRatio="none"><path d="M0 18h28l7-2 5 4 9-1 7-8 6 17 9-25 7 22 7-13 6 6 8-2h18l8-5 7 12 7-21 8 22 6-11 8 6 7-4h22l9-3 8 6 10-2h25" /></svg>
+                        </div>
+                    </section>
 
-                            <FormControl
-                                error={true}
-                                className={classes.spacing}
-                                style={{ visibility: pairingFailed ? 'visible' : 'hidden' }}
-                            >
-                                <FormHelperText>{pairingMessage}</FormHelperText>
-                            </FormControl>
-                            {!window.native?.interface && (
-                                <Tooltip
-                                    title={
-                                        <span>
-                                            Vivaldi's implementation of WebUSB is broken.
-                                            <br />
-                                            If you are using Vivaldi, most of this app's features will be broken.
-                                            <br />
-                                            Please switch to a different Chromium-based browser.
-                                        </span>
-                                    }
-                                >
-                                    <Alert severity="info" className={classes.notice}>
-                                        <b>Notice for users of the Vivaldi web browser</b> <br />
-                                    </Alert>
-                                </Tooltip>
+                    <aside className="studio-side-stack">
+                        <section className="studio-connect-panel">
+                            <div className="studio-panel-topline"><span>01 / HARDWARE</span><span className="studio-disconnected">NO DECK LINKED</span></div>
+                            {browserSupported ? (
+                                <>
+                                    <h2>Bring your deck online</h2>
+                                    <p>Choose a connection to open your disc workspace.</p>
+                                    <SplitButton
+                                        options={options}
+                                        color="primary"
+                                        boxClassName={`${classes.buttonBox} studio-connect-button`}
+                                        width={200}
+                                        disabled={Services[lastSelectedService].requiresChrome && !runningChrome}
+                                        selectedIndex={lastSelectedService}
+                                        dropdownMapping={mapToEntry}
+                                        loading={connectingInProgress}
+                                    />
+                                    <FormControl error={true} className={classes.spacing} style={{ visibility: pairingFailed ? 'visible' : 'hidden' }}>
+                                        <FormHelperText>{pairingMessage}</FormHelperText>
+                                    </FormControl>
+                                    {!window.native?.interface && (
+                                        <Tooltip title={<span>Vivaldi's WebUSB implementation is unreliable. Please use another Chromium based browser.</span>}>
+                                            <Alert severity="info" className={classes.notice}><b>Vivaldi browser notice</b></Alert>
+                                        </Tooltip>
+                                    )}
+                                </>
+                            ) : (
+                                <div className="studio-browser-warning">
+                                    <h2>Browser link unavailable</h2>
+                                    <p>This browser needs WebUSB and WebAssembly to control a local deck.</p>
+                                    <Link rel="noopener noreferrer" href="#" onClick={handleLearnWhy}>Learn why</Link>
+                                    <div className="studio-browser-actions">
+                                        <Link rel="noopener noreferrer" target="_blank" href="https://www.google.com/chrome/"><img alt="Chrome Logo" src={ChromeIconPath} className={classes.chromeLogo} /></Link>
+                                        <button className="studio-text-button" onClick={forceContinue}>Continue for remote devices</button>
+                                    </div>
+                                    {showWhyUnsupported && <p className="studio-browser-detail">WebUSB provides deck control; WebAssembly converts audio for MiniDisc.</p>}
+                                </div>
                             )}
-                        </div>
-                        <div>
-                            <Typography component="h2" variant="subtitle1" align="center" className={classes.spacing}>
-                                <Link rel="noopener noreferrer" target="_blank" href="https://www.minidisc.wiki/guides/webminidisc">
-                                    <span style={{ verticalAlign: 'middle' }}>First time here? Read the guide</span>{' '}
-                                    <OpenInNewIcon style={{ verticalAlign: 'middle' }} fontSize="inherit" />
-                                </Link>
-                            </Typography>
-                        </div>
-                    </React.Fragment>
-                ) : (
-                    <React.Fragment>
-                        <Typography component="h2" variant="subtitle1" align="center" className={classes.spacing}>
-                            This Web browser is not supported.&nbsp;
-                            <Link rel="noopener noreferrer" href="#" onClick={handleLearnWhy}>
-                                Learn Why
+                            <Link className="studio-guide-link" rel="noopener noreferrer" target="_blank" href="https://www.minidisc.wiki/guides/webminidisc">
+                                SETUP GUIDE <OpenInNewIcon fontSize="inherit" />
                             </Link>
-                        </Typography>
+                        </section>
 
-                        <Link rel="noopener noreferrer" target="_blank" href="https://www.google.com/chrome/">
-                            <img alt="Chrome Logo" src={ChromeIconPath} className={classes.chromeLogo} />
-                        </Link>
+                        <section className="studio-spectrum-panel" aria-label="Audio spectrum display">
+                            <div className="studio-panel-topline"><span>02 / SIGNAL MONITOR</span><span>AWAITING INPUT</span></div>
+                            <div className="studio-spectrum-display" aria-hidden="true">
+                                <div className="studio-spectrum-grid" />
+                                <div className="studio-spectrum-bars">{Array.from({ length: 38 }, (_, index) => <i key={index} style={{ height: `${14 + ((index * 19 + (index % 6) * 13) % 82)}%`, animationDelay: `${index * -53}ms` }} />)}</div>
+                            </div>
+                            <div className="studio-spectrum-footer"><span>LEFT <i /></span><span>RIGHT <i /></span></div>
+                        </section>
+                    </aside>
+                </div>
 
-                        <Typography component="h2" variant="subtitle1" align="center" className={classes.spacing}>
-                            Try using{' '}
-                            <Link rel="noopener noreferrer" target="_blank" href="https://www.google.com/chrome/">
-                                Chrome
-                            </Link>{' '}
-                            instead
-                        </Typography>
-
-                        <Typography component="p" variant="subtitle1" align="center" className={classes.spacing}>
-                            If you want to connect to a remote device, click{' '}
-                            <Link rel="noopener noreferrer" href="#" onClick={forceContinue}>
-                                here
-                            </Link>{' '}
-                            to load the app anyway.
-                        </Typography>
-
-                        {showWhyUnsupported ? (
-                            <>
-                                <Typography component="p" variant="body2" className={classes.why}>
-                                    Web MiniDisc Pro requires a browser that supports both{' '}
-                                    <Link rel="noopener noreferrer" target="_blank" href="https://wicg.github.io/webusb/">
-                                        WebUSB
-                                    </Link>{' '}
-                                    and{' '}
-                                    <Link rel="noopener noreferrer" target="_blank" href="https://webassembly.org/">
-                                        WebAssembly
-                                    </Link>
-                                    .
-                                </Typography>
-                                <ul>
-                                    <li>WebUSB is needed to control the NetMD device via the USB connection to your computer.</li>
-                                    <li>WebAssembly is used to convert the music to a MiniDisc compatible format</li>
-                                </ul>
-                            </>
-                        ) : null}
-                    </React.Fragment>
-                )}
-            </Box>
+                <div className="studio-mode-strip">
+                    <div><span className="studio-mode-number">A</span><span><b>TRANSFER TO MD</b><small>Drop in a playlist and shape your track order.</small></span></div>
+                    <div><span className="studio-mode-number">B</span><span><b>RECORD IN REAL TIME</b><small>Capture line-in audio straight to disc.</small></span></div>
+                    <div><span className="studio-mode-number">C</span><span><b>RIP & ARCHIVE</b><small>Bring tracks back from supported decks.</small></span></div>
+                </div>
+            </div>
             <SettingsDialog />
             <AboutDialog />
             <ChangelogDialog />

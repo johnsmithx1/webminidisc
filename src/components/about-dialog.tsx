@@ -20,7 +20,7 @@ const Transition = React.forwardRef(function Transition(props: SlideProps, ref: 
     return <Slide direction="up" ref={ref} {...props} />;
 });
 
-export const AboutDialog = (props: {}) => {
+export const AboutDialog = () => {
     const dispatch = useDispatch();
 
     const visible = useShallowEqualSelector((state) => state.appState.aboutDialogVisible);
