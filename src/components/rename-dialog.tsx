@@ -24,7 +24,6 @@ import Slide, { SlideProps } from '@mui/material/Slide';
 import Button from '@mui/material/Button';
 import Link from '@mui/material/Link';
 import Typography from '@mui/material/Typography';
-import { W95RenameDialog } from './win95/rename-dialog';
 import { Capability } from '../services/interfaces/netmd';
 
 const Transition = React.forwardRef(function Transition(props: SlideProps, ref: React.Ref<unknown>) {
@@ -202,20 +201,6 @@ export const RenameDialog = (props: {}) => {
         [dispatch]
     );
     // /HIMD
-
-    const { vintageMode } = useShallowEqualSelector((state) => state.appState);
-    if (vintageMode) {
-        const p = {
-            renameDialogVisible: visible,
-            renameDialogTitle: title,
-            renameDialogIndex: index,
-            what,
-            handleCancelRename,
-            handleDoRename,
-            handleChange,
-        };
-        return <W95RenameDialog {...p} />;
-    }
 
     return (
         <Dialog

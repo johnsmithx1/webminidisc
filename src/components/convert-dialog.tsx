@@ -54,7 +54,6 @@ import ListItemIcon from '@mui/material/ListItemIcon';
 import Radio from '@mui/material/Radio';
 import { FileRejection, useDropzone } from 'react-dropzone';
 import Backdrop from '@mui/material/Backdrop';
-import { W95ConvertDialog } from './win95/convert-dialog';
 import {
     Capability,
     Codec,
@@ -853,50 +852,6 @@ export const ConvertDialog = (props: { files: (File | AdaptiveFile)[] }) => {
     const isSelectedUnsupported = encoderSupportState.state === 'unsupported';
     const formatsSupport = minidiscSpec.availableFormats.map((e) => serviceRegistry.audioExportService!.getSupport(e.codec));
 
-    const vintageMode = useShallowEqualSelector((state) => state.appState.vintageMode);
-
-    if (vintageMode) {
-        const p = {
-            visible,
-            codecFamilyIndex: currentlySelectedCodecIndex[0],
-            titleFormat,
-            minidiscSpec,
-
-            titles,
-            selectedTrackIndex,
-            setSelectedTrack,
-
-            availableCharacters,
-            availableSeconds: availableDurationUnits,
-            loadingMetadata,
-
-            renameTrackManually,
-
-            moveFileUp,
-            moveFileDown,
-
-            handleClose,
-            handleChangeFormat,
-            handleChangeTitleFormat,
-            handleConvert,
-
-            tracksOrderVisible,
-            setTracksOrderVisible,
-            handleToggleTracksOrder,
-            selectedTrackRef,
-
-            getRootProps,
-            getInputProps,
-            isDragActive,
-            open,
-
-            disableRemove,
-            handleRemoveSelectedTrack,
-            handleRenameSelectedTrack,
-            dialogVisible,
-        };
-        return <W95ConvertDialog {...p} />;
-    }
 
     return (
         <Dialog

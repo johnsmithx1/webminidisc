@@ -11,7 +11,6 @@ import LinearProgress from '@mui/material/LinearProgress';
 import Box from '@mui/material/Box';
 import { makeStyles } from 'tss-react/mui';
 import { TransitionProps } from '@mui/material/transitions';
-import { W95RecordDialog } from './win95/record-dialog';
 
 const useStyles = makeStyles()((theme) => ({
     progressPerc: {
@@ -32,19 +31,6 @@ export const RecordDialog = (props: {}) => {
     const { visible, trackTotal, trackDone, trackCurrent, titleCurrent } = useShallowEqualSelector((state) => state.recordDialog);
 
     const progressValue = Math.round(trackCurrent);
-
-    const vintageMode = useShallowEqualSelector((state) => state.appState.vintageMode);
-    if (vintageMode) {
-        const p = {
-            visible,
-            trackTotal,
-            trackDone,
-            trackCurrent,
-            titleCurrent,
-            progressValue,
-        };
-        return <W95RecordDialog {...p} />;
-    }
 
     return (
         <Dialog

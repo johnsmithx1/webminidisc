@@ -1,4 +1,4 @@
-// MiniDisc Studio fork UI shell changes: 2026-09-16. Upstream device behavior remains unchanged.
+// Studio MD fork UI shell changes: 2026-09-19. Upstream device behavior remains unchanged.
 import React, { useMemo, lazy, Suspense } from 'react';
 import { belowDesktop, forAnyDesktop, forWideDesktop, useShallowEqualSelector, useThemeDetector } from '../frontend-utils';
 
@@ -9,8 +9,6 @@ import { createTheme, ThemeProvider } from '@mui/material/styles';
 import { makeStyles } from 'tss-react/mui';
 
 import Paper from '@mui/material/Paper';
-import Typography from '@mui/material/Typography';
-import Link from '@mui/material/Link';
 import Box from '@mui/material/Box';
 import './studio-theme.css';
 
@@ -78,9 +76,6 @@ const useStyles = makeStyles()((theme) => ({
             flexWrap: 'wrap',
         },
         marginLeft: -theme.spacing(2),
-    },
-    copyrightTypography: {
-        textAlign: 'center',
     },
     backdrop: {
         zIndex: theme.zIndex.drawer + 1000,
@@ -254,8 +249,8 @@ const InternalApp = () => {
                         <div className="studio-brand">
                             <div className="studio-brand-mark" aria-hidden="true">MD</div>
                             <div>
-                                <div className="studio-brand-name">MINIDISC STUDIO</div>
-                                <div className="studio-brand-caption">NETMD AUDIO WORKSPACE</div>
+                            <div className="studio-brand-name">STUDIO MD</div>
+                                <div className="studio-brand-caption">DISC CONTROL SYSTEM</div>
                             </div>
                         </div>
                         <div className="studio-header-status"><span className="studio-status-dot" /> READY FOR DEVICE</div>
@@ -273,18 +268,6 @@ const InternalApp = () => {
 
                         <Box className={classes.controlsContainer}>{mainView === 'MAIN' ? <Controls /> : null}</Box>
                     </Paper>
-                    <Typography variant="body2" color="textSecondary" className={`${classes.copyrightTypography} studio-attribution`}>
-                        {'© '}
-                        <Link rel="noopener noreferrer" color="inherit" target="_blank" href="https://stefano.brilli.me/">
-                            Stefano Brilli
-                        </Link>
-                        {', '}
-                        <Link rel="noopener noreferrer" color="inherit" target="_blank" href="https://github.com/asivery/">
-                            Asivery
-                        </Link>{' '}
-                        {new Date().getFullYear()}
-                        {'.'}
-                    </Typography>
                 </main>
             </Suspense>
 

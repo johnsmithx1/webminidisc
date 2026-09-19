@@ -12,7 +12,6 @@ import Slide, { SlideProps } from '@mui/material/Slide';
 import Button from '@mui/material/Button';
 import Link from '@mui/material/Link';
 import { makeStyles } from 'tss-react/mui';
-import { W95ChangelogDialog } from './win95/changelog-dialog';
 import { CHANGELOG } from '../changelog';
 import { ChangelogEntry } from '../bridge-types';
 
@@ -49,7 +48,6 @@ export const ChangelogDialog = (props: {}) => {
     const dispatch = useDispatch();
     const { classes } = useStyles();
 
-    const vintageMode = useShallowEqualSelector((state) => state.appState.vintageMode);
     const visible = useShallowEqualSelector((state) => state.appState.changelogDialogVisible);
 
     const handleClose = useCallback(() => {
@@ -140,15 +138,6 @@ export const ChangelogDialog = (props: {}) => {
 
         return <>{content}</>;
     }, [handleOpenEncoderSettings, classes]);
-
-    if (vintageMode) {
-        const p = {
-            visible,
-            handleClose,
-            content,
-        };
-        return <W95ChangelogDialog {...p} />;
-    }
 
     return (
         <Dialog

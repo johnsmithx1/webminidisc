@@ -1,4 +1,4 @@
-// MiniDisc Studio fork: remove the low-use Retro Mode entry and route, 2026-09-16.
+// Studio MD fork menu changes: 2026-09-19.
 import React, { useCallback } from 'react';
 import { useDispatch, batchActions, useDeviceCapabilities } from '../frontend-utils';
 

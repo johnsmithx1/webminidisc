@@ -13,7 +13,6 @@ import DialogTitle from '@mui/material/DialogTitle';
 import Slide, { SlideProps } from '@mui/material/Slide';
 import Button from '@mui/material/Button';
 import Link from '@mui/material/Link';
-import { W95AboutDialog } from './win95/about-dialog';
 import { GIT_DIFF, GIT_HASH, BUILD_DATE } from '../version-info';
 
 const Transition = React.forwardRef(function Transition(props: SlideProps, ref: React.Ref<unknown>) {
@@ -24,19 +23,10 @@ export const AboutDialog = () => {
     const dispatch = useDispatch();
 
     const visible = useShallowEqualSelector((state) => state.appState.aboutDialogVisible);
-    const vintageMode = useShallowEqualSelector((state) => state.appState.vintageMode);
 
     const handleClose = () => {
         dispatch(appActions.showAboutDialog(false));
     };
-
-    if (vintageMode) {
-        const p = {
-            visible,
-            handleClose,
-        };
-        return <W95AboutDialog {...p} />;
-    }
 
     return (
         <Dialog

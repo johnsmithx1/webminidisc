@@ -16,7 +16,6 @@ import Box from '@mui/material/Box';
 import Checkbox from '@mui/material/Checkbox';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import { makeStyles } from 'tss-react/mui';
-import { W95UploadDialog } from './win95/upload-dialog';
 import { setNotifyWhenFinished } from '../redux/actions';
 
 const useStyles = makeStyles()((theme) => ({
@@ -61,7 +60,7 @@ export const UploadDialog = (props: {}) => {
         trackEncodeProgress,
         trackEncodeProgressOutOf,
     } = useShallowEqualSelector((state) => state.uploadDialog);
-    const { vintageMode, notifyWhenFinished, hasNotificationSupport } = useShallowEqualSelector((state) => state.appState);
+    const { notifyWhenFinished, hasNotificationSupport } = useShallowEqualSelector((state) => state.appState);
 
     const handleCancelUpload = useCallback(() => {
         dispatch(uploadDialogActions.setCancelUpload(true));
@@ -77,30 +76,6 @@ export const UploadDialog = (props: {}) => {
     const currentTrackConversionProgress =
         trackEncodeProgressOutOf === 0 ? undefined : Math.floor((trackEncodeProgress / trackEncodeProgressOutOf) * 100);
 
-    if (vintageMode) {
-        const p = {
-            visible,
-            cancelled,
-            writtenProgress,
-            encryptedProgress,
-            totalProgress,
-
-            trackTotal,
-            trackCurrent,
-            trackConverting,
-            titleCurrent,
-            titleConverting,
-
-            handleCancelUpload,
-            progressValue,
-            bufferValue,
-            convertedValue,
-            notifyWhenFinished,
-            hasNotificationSupport,
-            handleNotifyWhenFinishedChanged,
-        };
-        return <W95UploadDialog {...p} />;
-    }
     return (
         <Dialog
             open={visible}

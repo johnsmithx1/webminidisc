@@ -68,7 +68,6 @@ import { DumpDialog } from './dump-dialog';
 import { TopMenu } from './topmenu';
 import Checkbox from '@mui/material/Checkbox';
 import Button from '@mui/material/Button';
-import { W95Main } from './win95/main';
 import { useMemo } from 'react';
 import { ChangelogDialog } from './changelog-dialog';
 import { getDefaultCodecName, Track } from '../services/interfaces/netmd';
@@ -192,7 +191,6 @@ export const Main = (props: {}) => {
     const deviceName = useShallowEqualSelector((state) => state.main.deviceName);
     const deviceStatus = useShallowEqualSelector((state) => state.main.deviceStatus);
     const factoryModeRippingInMainUi = useShallowEqualSelector((state) => state.appState.factoryModeRippingInMainUi);
-    const { vintageMode } = useShallowEqualSelector((state) => state.appState);
 
     const [selected, setSelected] = React.useState<number[]>([]);
     const [selectedGroups, setSelectedGroups] = React.useState<number[]>([]);
@@ -507,44 +505,6 @@ export const Main = (props: {}) => {
         setUploadMenuAnchorEl(null);
         dispatch(openLocalLibrary());
     }, [dispatch]);
-
-    if (vintageMode) {
-        const p = {
-            disc,
-            deviceName,
-
-            factoryModeRippingInMainUi,
-
-            selected,
-            setSelected,
-            selectedCount,
-            isUsingBytes: minidiscSpec?.measurementUnits == 'bytes',
-
-            tracks,
-            uploadedFiles,
-            setUploadedFiles,
-
-            onDrop,
-            getRootProps,
-            getInputProps,
-            isDragActive,
-            open,
-
-            moveMenuAnchorEl,
-            setMoveMenuAnchorEl,
-
-            handleShowMoveMenu,
-            handleCloseMoveMenu,
-            handleMoveSelectedTrack,
-            handleShowDumpDialog,
-            handleDeleteSelected,
-            handleRenameActionClick,
-            handleRenameTrack,
-            handleSelectAllClick,
-            handleSelectTrackClick,
-        };
-        return <W95Main {...p} />;
-    }
 
     return (
         <React.Fragment>

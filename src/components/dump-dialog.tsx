@@ -15,7 +15,6 @@ import { makeStyles } from 'tss-react/mui';
 import Typography from '@mui/material/Typography';
 import serviceRegistry from '../services/registry';
 import { TransitionProps } from '@mui/material/transitions';
-import { W95DumpDialog } from './win95/dump-dialog';
 import { exploitDownloadTracks } from '../redux/factory/factory-actions';
 import { LineInDeviceSelect } from './line-in-helpers';
 
@@ -83,20 +82,6 @@ export const DumpDialog = ({
         [trackIndexes, dispatch, handleClose, isExploitDownload]
     );
 
-    const vintageMode = useShallowEqualSelector((state) => state.appState.vintageMode);
-
-    if (vintageMode) {
-        const p = {
-            handleClose,
-            handleChange,
-            handleStartTransfer,
-            visible,
-            deviceCapabilities,
-            inputDeviceId,
-            isCapableOfDownload,
-        };
-        return <W95DumpDialog {...p} />;
-    }
 
     return (
         <Dialog

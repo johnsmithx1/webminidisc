@@ -1,4 +1,4 @@
-// MiniDisc Studio fork branding changes: 2026-09-16.
+// Studio MD fork workspace changes: 2026-09-19.
 import React, { useCallback, useState } from 'react';
 import { useDispatch, batchActions } from '../frontend-utils';
 import { deleteService, pair } from '../redux/actions';
@@ -6,17 +6,12 @@ import { deleteService, pair } from '../redux/actions';
 import { useShallowEqualSelector } from '../frontend-utils';
 
 import { makeStyles } from 'tss-react/mui';
-import FormControl from '@mui/material/FormControl';
-import FormHelperText from '@mui/material/FormHelperText';
-import Link from '@mui/material/Link';
 import IconButton from '@mui/material/IconButton';
 
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
-import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 
 import { TopMenu } from './topmenu';
-import ChromeIconPath from '../images/chrome-icon.svg';
 
 import SplitButton, { OptionType } from './split-button';
 import {
@@ -62,11 +57,6 @@ const useStyles = makeStyles()((theme) => ({
     },
     spacing: {
         marginTop: theme.spacing(1),
-    },
-    chromeLogo: {
-        marginTop: theme.spacing(1),
-        width: 96,
-        height: 96,
     },
     why: {
         alignSelf: 'flex-start',
@@ -118,16 +108,13 @@ export const Welcome = () => {
         [dispatch]
     );
 
-    const [showWhyUnsupported, setWhyUnsupported] = useState(false);
-    const handleLearnWhy = (event: React.SyntheticEvent) => {
-        event.preventDefault();
-        setWhyUnsupported(true);
-    };
-
     const forceContinue = (event: React.SyntheticEvent) => {
         event.preventDefault();
         dispatch(appActions.setBrowserSupported(true));
     };
+
+    const [activeBay, setActiveBay] = useState('deck');
+    const [selectedTrack, setSelectedTrack] = useState(3);
 
     const options: OptionType[] = availableServices.map((n, i) => ({
         name: getConnectButtonName(n),
@@ -182,89 +169,44 @@ export const Welcome = () => {
 
     return (
         <React.Fragment>
-            <div className="studio-welcome">
-                <div className="studio-welcome-toolbar">
-                    <div>
-                        <div className="studio-eyebrow">MINIDISC / DIGITAL AUDIO SYSTEM</div>
-                        <div className="studio-welcome-title">Make a little noise.</div>
+            <div className="studio-workspace">
+                <div className="studio-workspace-toolbar">
+                    <div><div className="studio-eyebrow">STUDIO MD / LIVE CONSOLE</div><div className="studio-workspace-title">Your designs, in motion.</div></div>
+                    <div className="studio-workspace-toolbar-right">
+                        <span className="studio-workspace-clock">{pairingFailed ? pairingMessage : 'NO DECK LINKED'}</span>
+                        {browserSupported ? <SplitButton options={options} color="primary" boxClassName="studio-workspace-connect" width={150} disabled={Services[lastSelectedService].requiresChrome && !runningChrome} selectedIndex={lastSelectedService} dropdownMapping={mapToEntry} loading={connectingInProgress} /> : <button type="button" className="studio-workspace-remote" onClick={forceContinue}>REMOTE MODE</button>}
+                        <TopMenu />
                     </div>
-                    <TopMenu />
                 </div>
-
-                <div className="studio-dashboard-grid">
-                    <section className="studio-hero-panel">
-                        <div className="studio-hero-copy">
-                            <div className="studio-live-label"><span className="studio-status-dot" /> DEVICE BAY / STANDBY</div>
-                            <div className="studio-display-title">Your next mix,<br /><em>etched in light.</em></div>
-                            <p>Connect a NetMD deck to move music between your collection and the disc.</p>
-                        </div>
-                        <div className="studio-disc-stage" aria-hidden="true">
-                            <div className="studio-disc-orbit studio-disc-orbit-one" />
-                            <div className="studio-disc-orbit studio-disc-orbit-two" />
-                            <div className="studio-disc-art"><div className="studio-disc-center"><span>MD</span><small>STUDIO EDITION</small></div></div>
-                            <div className="studio-disc-tag studio-disc-tag-left">ATRAC / PCM<br /><b>AUDIO ENGINE</b></div>
-                            <div className="studio-disc-tag studio-disc-tag-right">NETMD<br /><b>TRANSFER LINK</b></div>
-                        </div>
-                        <div className="studio-hero-bottom">
-                            <span>01 <b>TRANSFER</b></span><span>02 <b>RECORD</b></span><span>03 <b>ARCHIVE</b></span>
-                            <svg className="studio-wave-line" viewBox="0 0 250 34" preserveAspectRatio="none"><path d="M0 18h28l7-2 5 4 9-1 7-8 6 17 9-25 7 22 7-13 6 6 8-2h18l8-5 7 12 7-21 8 22 6-11 8 6 7-4h22l9-3 8 6 10-2h25" /></svg>
-                        </div>
+                <nav className="studio-bay-tabs" aria-label="Studio bays">
+                    {[['deck', 'MINI DECK'], ['burner', 'BURNER BAY'], ['equalizer', 'DSP EQUALIZER'], ['labels', 'LABEL BAY']].map(([id, label]) => <button type="button" key={id} className={activeBay === id ? 'is-active' : ''} onClick={() => setActiveBay(id)}>{label}</button>)}
+                </nav>
+                <div className="studio-window-grid">
+                    <section className={`studio-window studio-window-deck ${activeBay === 'deck' ? 'is-focused' : ''}`} onClick={() => setActiveBay('deck')}>
+                        <div className="studio-window-titlebar"><span><i className="studio-window-led" /> MINI DECK <b>// TOC + TRANSPORT</b></span><span className="studio-window-tools">− □ ×</span></div>
+                        <div className="studio-lcd-row"><div><small>DISC NAME</small><strong>NIGHT BUS / TAPE 07</strong></div><div><small>REMAIN</small><strong>23:41 <em>LP2</em></strong></div><div><small>TRACK</small><strong>04 <em>/ 08</em></strong></div></div>
+                        <div className="studio-track-table"><div className="studio-track-head"><span>#</span><span>TITLE / ARTIST</span><span>MODE</span><span>TIME</span></div>{['Ghost in the Jog Dial', 'Halcyon Transit', 'Night Drive Memory', 'Signal Bloom', 'Afterimage'].map((title, index) => <button type="button" className={`studio-track-row ${selectedTrack === index ? 'is-selected' : ''}`} key={title} onClick={(event) => { event.stopPropagation(); setSelectedTrack(index); }}><span>{String(index + 1).padStart(2, '0')}</span><span><b>{title}</b><small>{index % 2 ? 'Halcyon Transit' : 'Neon Arcade'}</small></span><em>SP</em><time>0{index + 2}:2{index}</time></button>)}</div>
+                        <div className="studio-transport"><button type="button">|◀</button><button type="button" className="studio-transport-primary">▶</button><button type="button">Ⅱ</button><button type="button">■</button><button type="button">▶|</button><div className="studio-jog">JOG<br /><b>04</b></div></div>
                     </section>
-
-                    <aside className="studio-side-stack">
-                        <section className="studio-connect-panel">
-                            <div className="studio-panel-topline"><span>01 / HARDWARE</span><span className="studio-disconnected">NO DECK LINKED</span></div>
-                            {browserSupported ? (
-                                <>
-                                    <h2>Bring your deck online</h2>
-                                    <p>Choose a connection to open your disc workspace.</p>
-                                    <SplitButton
-                                        options={options}
-                                        color="primary"
-                                        boxClassName={`${classes.buttonBox} studio-connect-button`}
-                                        width={200}
-                                        disabled={Services[lastSelectedService].requiresChrome && !runningChrome}
-                                        selectedIndex={lastSelectedService}
-                                        dropdownMapping={mapToEntry}
-                                        loading={connectingInProgress}
-                                    />
-                                    <FormControl error={true} className={classes.spacing} style={{ visibility: pairingFailed ? 'visible' : 'hidden' }}>
-                                        <FormHelperText>{pairingMessage}</FormHelperText>
-                                    </FormControl>
-                                </>
-                            ) : (
-                                <div className="studio-browser-warning">
-                                    <h2>Browser link unavailable</h2>
-                                    <p>This browser needs WebUSB and WebAssembly to control a local deck.</p>
-                                    <Link rel="noopener noreferrer" href="#" onClick={handleLearnWhy}>Learn why</Link>
-                                    <div className="studio-browser-actions">
-                                        <Link rel="noopener noreferrer" target="_blank" href="https://www.google.com/chrome/"><img alt="Chrome Logo" src={ChromeIconPath} className={classes.chromeLogo} /></Link>
-                                        <button className="studio-text-button" onClick={forceContinue}>Continue for remote devices</button>
-                                    </div>
-                                    {showWhyUnsupported && <p className="studio-browser-detail">WebUSB provides deck control; WebAssembly converts audio for MiniDisc.</p>}
-                                </div>
-                            )}
-                            <Link className="studio-guide-link" rel="noopener noreferrer" target="_blank" href="https://www.minidisc.wiki/guides/webminidisc">
-                                SETUP GUIDE <OpenInNewIcon fontSize="inherit" />
-                            </Link>
-                        </section>
-
-                        <section className="studio-spectrum-panel" aria-label="Audio spectrum display">
-                            <div className="studio-panel-topline"><span>02 / SIGNAL MONITOR</span><span>AWAITING INPUT</span></div>
-                            <div className="studio-spectrum-display" aria-hidden="true">
-                                <div className="studio-spectrum-grid" />
-                                <div className="studio-spectrum-bars">{Array.from({ length: 38 }, (_, index) => <i key={index} style={{ height: `${14 + ((index * 19 + (index % 6) * 13) % 82)}%`, animationDelay: `${index * -53}ms` }} />)}</div>
-                            </div>
-                            <div className="studio-spectrum-footer"><span>LEFT <i /></span><span>RIGHT <i /></span></div>
-                        </section>
-                    </aside>
+                    <section className={`studio-window studio-window-burner ${activeBay === 'burner' ? 'is-focused' : ''}`} onClick={() => setActiveBay('burner')}>
+                        <div className="studio-window-titlebar"><span><i className="studio-window-led studio-window-led-warm" /> BURNER BAY <b>// DISC FIT + LOUDNESS</b></span><span className="studio-window-tools">− □ ×</span></div>
+                        <div className="studio-burner-head"><div><small>DISC MAP · SP-EQUIVALENT MINUTES</small><strong>34:12 <em>/ 80:00</em></strong></div><span className="studio-mode-chip">MD-80</span></div>
+                        <div className="studio-disc-map"><i style={{ width: '43%' }} /><i style={{ width: '19%' }} /><i style={{ width: '12%' }} /><span>34:12 USED</span></div>
+                        <div className="studio-burner-actions"><button type="button" className="studio-action-primary">AUTO-FIT</button><button type="button">ALL SP</button></div>
+                        <div className="studio-burner-footer"><span>QUALITY TARGET</span><b>SP · BEST QUALITY</b><span>5 TRACKS READY</span></div>
+                    </section>
+                    <section className={`studio-window studio-window-eq ${activeBay === 'equalizer' ? 'is-focused' : ''}`} onClick={() => setActiveBay('equalizer')}>
+                        <div className="studio-window-titlebar"><span><i className="studio-window-led studio-window-led-purple" /> DSP BAY <b>// EQUALIZER</b></span><span className="studio-window-tools">− □ ×</span></div>
+                        <div className="studio-eq-head"><span>RESPONSE CURVE</span><button type="button">EQ ON</button></div>
+                        <div className="studio-eq-graph"><svg viewBox="0 0 400 100" preserveAspectRatio="none"><path d="M0 65 C35 62 48 45 80 51 S120 78 155 56 S197 28 226 45 S278 70 308 47 S353 32 400 40" /></svg></div>
+                        <div className="studio-eq-sliders">{['60', '250', '1K', '4K', '16K'].map((label, index) => <div key={label}><span>{label}</span><i style={{ height: `${38 + index * 11}%` }} /><b>{index % 2 ? '+2' : '0'} dB</b></div>)}</div>
+                    </section>
+                    <section className={`studio-window studio-window-label ${activeBay === 'labels' ? 'is-focused' : ''}`} onClick={() => setActiveBay('labels')}>
+                        <div className="studio-window-titlebar"><span><i className="studio-window-led studio-window-led-lavender" /> LABEL BAY <b>// DISC FACE + SPINE</b></span><span className="studio-window-tools">− □ ×</span></div>
+                        <div className="studio-label-body"><div className="studio-label-preview"><div>MD</div><strong>NIGHT BUS</strong><small>TAPE 07 · 2026</small></div><div className="studio-label-form"><label>ALBUM<input defaultValue="Night Bus / Tape 07" /></label><label>ARTIST<input defaultValue="Halcyon Transit" /></label><button type="button" className="studio-action-primary">EXPORT LABEL SHEET</button></div></div>
+                    </section>
                 </div>
-
-                <div className="studio-mode-strip">
-                    <div><span className="studio-mode-number">A</span><span><b>TRANSFER TO MD</b><small>Drop in a playlist and shape your track order.</small></span></div>
-                    <div><span className="studio-mode-number">B</span><span><b>RECORD IN REAL TIME</b><small>Capture line-in audio straight to disc.</small></span></div>
-                    <div><span className="studio-mode-number">C</span><span><b>RIP & ARCHIVE</b><small>Bring tracks back from supported decks.</small></span></div>
-                </div>
+                <div className="studio-workspace-status"><span><i className="studio-window-led" /> WORKSPACE READY</span><span>USB TRANSFER <b>STANDBY</b></span><span>ATRAC / PCM AUDIO ENGINE</span></div>
             </div>
             <SettingsDialog />
             <AboutDialog />
