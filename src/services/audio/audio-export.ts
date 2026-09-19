@@ -1,6 +1,7 @@
 import { createWorker, setLogging } from '@ffmpeg/ffmpeg';
 import { CodecFamily } from '../interfaces/netmd';
 import { getPublicPathFor } from '../../utils';
+import { DspParams, LoudnormMeasurement, buildMeasureChain, buildRenderChain, hasDsp, parseLoudnormJson } from './dsp';
 
 export interface LogPayload {
     message: string;
@@ -11,6 +12,8 @@ export type ExportParams = {
     format: { bitrate: number; codec: 'AT3' | 'A3+' | 'PCM' | 'MP3' };
     enableReplayGain?: boolean;
     writeGapless: boolean;
+    /** Pre-encode EQ / loudness. Ignored by encoders where supportsDsp() is false. */
+    dsp?: DspParams;
 };
 
 export interface AudioExportService {
@@ -20,6 +23,8 @@ export interface AudioExportService {
     prepare(file: File): Promise<void>;
 
     getSupport(codec: CodecFamily): { state: 'perfect' | 'mediocre' | 'unsupported'; gapless: boolean };
+    /** Whether EQ / loudness can be applied before encoding to this codec. */
+    supportsDsp(codec: CodecFamily): boolean;
 }
 
 export abstract class DefaultFfmpegAudioExportService implements AudioExportService {
@@ -27,6 +32,7 @@ export abstract class DefaultFfmpegAudioExportService implements AudioExportServ
     public loglines: { action: string; message: string }[] = [];
     public inFileName: string = ``;
     public outFileNameNoExt: string = ``;
+    private loudnormMeasurement?: LoudnormMeasurement | null;
 
     async init() {
         setLogging(true);
@@ -102,11 +108,48 @@ export abstract class DefaultFfmpegAudioExportService implements AudioExportServ
         return { format, input };
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    supportsDsp(_codec: CodecFamily): boolean {
+        // Every encoder that builds its command via createFfmpegParams() gets DSP for free.
+        return true;
+    }
+
+    /**
+     * External encoders (remote server, desktop bridge) receive the source file.
+     * When DSP is active, render it through ffmpeg to 16-bit WAV first so they get the processed audio.
+     */
+    async getSourceForExternalEncoder(parameters: ExportParams, originalName: string): Promise<{ data: Uint8Array; name: string }> {
+        const dspChain = hasDsp(parameters.dsp) ? buildRenderChain(parameters.dsp, this.loudnormMeasurement ?? undefined) : null;
+        if (!dspChain) {
+            const { data } = await this.ffmpegProcess.read(this.inFileName);
+            return { data, name: originalName };
+        }
+        const outName = `${this.outFileNameNoExt}.dsp.wav`;
+        await this.ffmpegProcess.transcode(this.inFileName, outName, `-af ${dspChain} -ac 2 -ar 44100 -c:a pcm_s16le -f wav`);
+        const { data } = await this.ffmpegProcess.read(outName);
+        return { data, name: originalName.replace(/\.[^.]*$/, '') + '.wav' };
+    }
+
+    /** First pass of two-pass loudnorm: measure the (post-EQ) programme loudness. */
+    async measureLoudness(dsp: DspParams): Promise<LoudnormMeasurement | null> {
+        const chain = buildMeasureChain(dsp);
+        if (!chain) return null;
+        this.loglines = [];
+        await this.ffmpegProcess.transcode(this.inFileName, 'null', `-af ${chain} -ac 2 -ar 44100 -f null`);
+        const measured = parseLoudnormJson(this.loglines.map((l) => l.message).join('\n'));
+        this.loglines = [];
+        return measured;
+    }
+
     async createFfmpegParams(parameters: ExportParams, outputFormat: string, moreParams?: string) {
-        const { enableReplayGain } = parameters;
+        const { enableReplayGain, dsp } = parameters;
         let additionalCommands = '';
         const commonFormatting = `-ac 2 -ar 44100`;
-        if (enableReplayGain) {
+        const dspChain = hasDsp(dsp) ? buildRenderChain(dsp, this.loudnormMeasurement ?? undefined) : null;
+        if (dspChain) {
+            // DSP supersedes ReplayGain - the UI never enables both.
+            additionalCommands += `-af ${dspChain}`;
+        } else if (enableReplayGain) {
             additionalCommands += `-af volume=replaygain=track`;
         }
         return `${additionalCommands} ${commonFormatting} ${moreParams ?? ''} -f ${outputFormat}`;
@@ -114,6 +157,11 @@ export abstract class DefaultFfmpegAudioExportService implements AudioExportServ
 
     async export(parameters: ExportParams, callback?: (obj: { state: number; total: number }) => void) {
         const { format } = parameters;
+        this.loudnormMeasurement = null;
+        if (hasDsp(parameters.dsp) && parameters.dsp.loudness && this.supportsDsp(format.codec as CodecFamily)) {
+            // If measurement fails (e.g. silent track) loudnorm falls back to its single-pass dynamic mode.
+            this.loudnormMeasurement = await this.measureLoudness(parameters.dsp);
+        }
         let result: ArrayBuffer;
         if (format.codec === `PCM`) {
             result = await this.encodePCM(parameters);

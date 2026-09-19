@@ -72,6 +72,8 @@ import TableCell from '@mui/material/TableCell';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import { LeftInNondefaultCodecs } from './main-rows';
+import { DspPanel } from './dsp-panel';
+import { buildDspParams } from '../redux/dsp-feature';
 
 const Transition = React.forwardRef(function Transition(props: SlideProps, ref: React.Ref<unknown>) {
     return <Slide direction="up" ref={ref} {...props} />;
@@ -216,6 +218,29 @@ const useStyles = makeStyles()((theme) => ({
     iconButton: {
         marginRight: theme.spacing(1),
     },
+    trackModeButton: {
+        marginLeft: theme.spacing(1),
+        padding: '1px 6px',
+        font: 'inherit',
+        fontSize: '0.7rem',
+        fontWeight: 700,
+        letterSpacing: '0.08em',
+        cursor: 'pointer',
+        color: theme.palette.primary.main,
+        background: 'transparent',
+        border: `1px solid ${theme.palette.primary.main}`,
+        borderRadius: 3,
+    },
+    fitRow: {
+        display: 'flex',
+        alignItems: 'center',
+        flexWrap: 'wrap',
+        gap: theme.spacing(1),
+        marginTop: theme.spacing(1),
+    },
+    fitMessage: {
+        flex: '1 1 160px',
+    },
 }));
 
 type FileWithMetadata = {
@@ -226,6 +251,7 @@ type FileWithMetadata = {
     duration: number;
     forcedEncoding: ForcedEncodingFormat;
     bytesToSkip: number;
+    targetCodec?: Codec | null;
 };
 
 function createForcedEncodingText(selectedCodec: Codec, file: { forcedEncoding: ForcedEncodingFormat }) {
@@ -253,6 +279,7 @@ export const ConvertDialog = (props: { files: (File | AdaptiveFile)[] }) => {
 
     const { visible, format, titleFormat, titles } = useShallowEqualSelector((state) => state.convertDialog);
     const { fullWidthSupport } = useShallowEqualSelector((state) => state.appState);
+    const dspState = useShallowEqualSelector((state) => state.dsp);
     const { disc, deviceCapabilities } = useShallowEqualSelector((state) => state.main);
     const minidiscSpec = serviceRegistry.netmdSpec!;
 
@@ -449,6 +476,7 @@ export const ConvertDialog = (props: { files: (File | AdaptiveFile)[] }) => {
                             bytesToSkip: file.bytesToSkip,
                             album: file.album,
                             artist: file.artist,
+                            targetCodec: file.targetCodec ?? null,
                         };
                     })
                 )
@@ -575,7 +603,7 @@ export const ConvertDialog = (props: { files: (File | AdaptiveFile)[] }) => {
             if (!b.forcedEncoding || (b.forcedEncoding.codec === 'MP3' && currentlySelectedCodec.codec !== 'MP3')) {
                 // MP3 forcedEncoding only suggests the target bitrate when the user selects 'MP3' as the recording format
                 // MP3 can never be 'forced', like LP2 can f.ex.
-                return total + minidiscSpec.translateToDefaultMeasuringModeFrom(currentlySelectedCodec, b.duration);
+                return total + minidiscSpec.translateToDefaultMeasuringModeFrom(b.targetCodec ?? currentlySelectedCodec, b.duration);
             }
             return total + minidiscSpec.translateToDefaultMeasuringModeFrom(b.forcedEncoding, b.duration);
         }, 0);
@@ -589,7 +617,7 @@ export const ConvertDialog = (props: { files: (File | AdaptiveFile)[] }) => {
             if (!b.forcedEncoding || (b.forcedEncoding.codec === 'MP3' && currentlySelectedCodec.codec !== 'MP3')) {
                 // MP3 forcedEncoding only suggests the target bitrate when the user selects 'MP3' as the recording format
                 // MP3 can never be 'forced', like LP2 can f.ex.
-                return total + minidiscSpec.translateToDefaultMeasuringModeFrom(currentlySelectedCodec, b.duration);
+                return total + minidiscSpec.translateToDefaultMeasuringModeFrom(b.targetCodec ?? currentlySelectedCodec, b.duration);
             }
             const codec: Codec = {
                 bitrate: b.forcedEncoding.bitrate,
@@ -638,6 +666,85 @@ export const ConvertDialog = (props: { files: (File | AdaptiveFile)[] }) => {
         else calculateFreeSpaceFrames();
     }, [disc, titles, currentlySelectedCodec, minidiscSpec]);
 
+    // ---- Disc Fit Planner: per-track recording modes -------------------------------------------
+    // Candidate modes, best quality first. Mono is excluded: it needs a batch-level device switch.
+    const trackModes = useMemo(() => {
+        const exporter = serviceRegistry.audioExportService;
+        return minidiscSpec.availableFormats
+            .filter((f) => f.codec !== 'SPM')
+            .flatMap((f) =>
+                f.availableBitrates.map((bitrate) => ({
+                    codec: { codec: f.codec, bitrate } as Codec,
+                    label: f.availableBitrates.length > 1 ? `${f.userFriendlyName ?? f.codec} ${bitrate}` : f.userFriendlyName ?? f.codec,
+                }))
+            )
+            .filter((m) => !exporter || exporter.getSupport(m.codec.codec).state !== 'unsupported');
+    }, [minidiscSpec]);
+    const perTrackModesAvailable = isUsingFrames && !usesHimdTitles && trackModes.length > 1;
+
+    const sameCodec = (a?: Codec | null, b?: Codec | null) => !!a && !!b && a.codec === b.codec && a.bitrate === b.bitrate;
+
+    const trackModeLabel = useCallback(
+        (codec?: Codec | null) => {
+            if (!codec) return 'AUTO';
+            return trackModes.find((m) => sameCodec(m.codec, codec))?.label ?? `${codec.codec}`;
+        },
+        [trackModes]
+    );
+
+    const cycleTrackMode = useCallback(
+        (index: number) => {
+            setFiles((files) => {
+                const next = files.slice();
+                const cur = next[index].targetCodec;
+                const pos = cur ? trackModes.findIndex((m) => sameCodec(m.codec, cur)) : -1;
+                // AUTO -> mode 0 -> mode 1 -> ... -> AUTO
+                const newCodec = pos + 1 < trackModes.length ? trackModes[pos + 1].codec : null;
+                next[index] = { ...next[index], targetCodec: newCodec };
+                return next;
+            });
+        },
+        [trackModes]
+    );
+
+    const [fitMessage, setFitMessage] = useState<string | null>(null);
+    const handleAutoFit = useCallback(() => {
+        if (!disc || trackModes.length === 0) return;
+        const cost = (codec: Codec, duration: number) => minidiscSpec.translateToDefaultMeasuringModeFrom(codec, duration);
+        const levels = files.map(() => 0);
+        const eligible = files.map((f, i) => (f.forcedEncoding ? -1 : i)).filter((i) => i >= 0);
+        const fixed = files.reduce((t, f) => (f.forcedEncoding ? t + cost(f.forcedEncoding, f.duration) : t), 0);
+        const used = () => fixed + eligible.reduce((t, i) => t + cost(trackModes[levels[i]].codec, files[i].duration), 0);
+        // Greedy: always downgrade the track whose next step frees the most space (longest tracks go first).
+        while (used() > disc.left) {
+            let best = -1;
+            let bestSaving = 0;
+            for (const i of eligible) {
+                if (levels[i] + 1 >= trackModes.length) continue;
+                const saving =
+                    cost(trackModes[levels[i]].codec, files[i].duration) - cost(trackModes[levels[i] + 1].codec, files[i].duration);
+                if (saving > bestSaving) {
+                    bestSaving = saving;
+                    best = i;
+                }
+            }
+            if (best < 0) break;
+            levels[best]++;
+        }
+        const fits = used() <= disc.left;
+        setFiles((files) => files.map((f, i) => (f.forcedEncoding ? f : { ...f, targetCodec: trackModes[levels[i]].codec })));
+        const counts = trackModes.map((m, li) => `${levels.filter((l, i) => l === li && eligible.includes(i)).length}× ${m.label}`);
+        setFitMessage(
+            fits ? `Fits: ${counts.join(' · ')}` : `Does not fit even at ${trackModes[trackModes.length - 1].label}. Remove tracks.`
+        );
+        setTracksOrderVisible(true);
+    }, [disc, files, trackModes, minidiscSpec]);
+
+    const handleClearTrackModes = useCallback(() => {
+        setFiles((files) => files.map((f) => ({ ...f, targetCodec: null })));
+        setFitMessage(null);
+    }, []);
+
     // Reload titles when files changed
     useEffect(() => {
         refreshTitledFiles(files, usesHimdTitles ? 'title' : titleFormat);
@@ -661,10 +768,18 @@ export const ConvertDialog = (props: { files: (File | AdaptiveFile)[] }) => {
             const isSelected = selectedTrackIndex === i;
             const ref = isSelected ? selectedTrackRef : null;
             let fileLength;
+            const effectiveCodec: Codec = file.forcedEncoding ?? file.targetCodec ?? currentlySelectedCodec;
             if (isUsingFrames) {
-                fileLength = file.duration;
+                // Express every track in the batch mode's seconds, so mixed-mode rows compare correctly.
+                fileLength =
+                    effectiveCodec === currentlySelectedCodec
+                        ? file.duration
+                        : minidiscSpec.translateDefaultMeasuringModeTo(
+                              currentlySelectedCodec,
+                              minidiscSpec.translateToDefaultMeasuringModeFrom(effectiveCodec, file.duration)
+                          );
             } else {
-                fileLength = minidiscSpec.translateToDefaultMeasuringModeFrom(file.forcedEncoding ?? currentlySelectedCodec, file.duration);
+                fileLength = minidiscSpec.translateToDefaultMeasuringModeFrom(effectiveCodec, file.duration);
             }
             current -= fileLength;
             const { halfWidth, fullWidth } = minidiscSpec.getCharactersForTitle({
@@ -699,7 +814,20 @@ export const ConvertDialog = (props: { files: (File | AdaptiveFile)[] }) => {
                         primary={`${file.fullWidthTitle && file.fullWidthTitle + ' / '}${file.title}`}
                         secondary={
                             <span>
-                                {fileLengthPresentationFunction(fileLength)}
+                                {fileLengthPresentationFunction(isUsingFrames ? file.duration : fileLength)}
+                                {perTrackModesAvailable && !file.forcedEncoding && (
+                                    <button
+                                        type="button"
+                                        className={classes.trackModeButton}
+                                        title="Recording mode for this track (click to cycle)"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            cycleTrackMode(i);
+                                        }}
+                                    >
+                                        {trackModeLabel(file.targetCodec)}
+                                    </button>
+                                )}
                                 {file.forcedEncoding && (
                                     <Tooltip title="Forced format - this file will be uploaded as-is. Recording mode will be disregarded for it">
                                         <span className={classes.forcedEncodingLabel}>
@@ -724,8 +852,12 @@ export const ConvertDialog = (props: { files: (File | AdaptiveFile)[] }) => {
         classes.durationNotFit,
         classes.nameNotFit,
         classes.forcedEncodingLabel,
+        classes.trackModeButton,
         currentlySelectedCodec,
         minidiscSpec,
+        perTrackModesAvailable,
+        cycleTrackMode,
+        trackModeLabel,
     ]);
 
     const renderHiMDTracks = useCallback(() => {
@@ -820,6 +952,18 @@ export const ConvertDialog = (props: { files: (File | AdaptiveFile)[] }) => {
 
     const dialogVisible = useShallowEqualSelector((state) => state.convertDialog.visible);
 
+    const previewFile = useMemo(() => {
+        const f = files[selectedTrackIndex >= 0 ? selectedTrackIndex : 0]?.file;
+        return f && !(f as any).getForEncoding ? (f as File) : null;
+    }, [files, selectedTrackIndex]);
+    const previewTitle = titles[selectedTrackIndex >= 0 ? selectedTrackIndex : 0]?.title ?? '';
+    const dspSummary = [
+        dspState.eqEnabled && dspState.eqGains.some((g) => g !== 0) ? 'EQ' : null,
+        dspState.loudnessTarget !== null ? `${dspState.loudnessTarget} LUFS` : null,
+    ]
+        .filter(Boolean)
+        .join(' + ');
+
     const handleConvert = useCallback(() => {
         handleClose();
         setEnableReplayGain(false);
@@ -832,15 +976,17 @@ export const ConvertDialog = (props: { files: (File | AdaptiveFile)[] }) => {
                     album: n.album ?? '',
                     // Exception: If an MP3 file was selected, do not 'force' upload it - treat it merely as a suggestion for the bitrate
                     forcedEncoding: n.forcedEncoding?.codec === 'MP3' && currentlySelectedCodec.codec !== 'MP3' ? null : n.forcedEncoding,
+                    targetCodec: perTrackModesAvailable ? n.targetCodec ?? null : null,
                 })),
                 currentlySelectedCodec,
                 {
-                    enableReplayGain,
+                    enableReplayGain: enableReplayGain && dspState.loudnessTarget === null,
                     enableGapless,
+                    dsp: buildDspParams(dspState),
                 }
             )
         );
-    }, [dispatch, handleClose, titles, currentlySelectedCodec, files, enableReplayGain, enableGapless]);
+    }, [dispatch, handleClose, titles, currentlySelectedCodec, files, enableReplayGain, enableGapless, dspState, perTrackModesAvailable]);
 
     const encoderSupportState = useMemo(
         () => serviceRegistry.audioExportService!.getSupport(currentlySelectedCodec.codec),
@@ -901,7 +1047,7 @@ export const ConvertDialog = (props: { files: (File | AdaptiveFile)[] }) => {
     return (
         <Dialog
             open={visible}
-            maxWidth={'xs'}
+            maxWidth={'sm'}
             fullWidth={true}
             TransitionComponent={Transition as any}
             aria-labelledby="convert-dialog-slide-title"
@@ -1077,6 +1223,19 @@ export const ConvertDialog = (props: { files: (File | AdaptiveFile)[] }) => {
                         )}
                     </Typography>
                 </span>
+                {perTrackModesAvailable && !loadingMetadata && files.length > 0 && (
+                    <div className={classes.fitRow}>
+                        <Button size="small" variant="outlined" onClick={handleAutoFit}>
+                            Auto-fit modes
+                        </Button>
+                        <Button size="small" onClick={handleClearTrackModes} disabled={!files.some((f) => f.targetCodec)}>
+                            Reset
+                        </Button>
+                        <Typography variant="caption" color="textSecondary" className={classes.fitMessage}>
+                            {fitMessage ?? "Per-track modes: click a track's mode badge, or auto-fit to the disc."}
+                        </Typography>
+                    </div>
+                )}
                 {!fullWidthSupport && deviceSupportsFullWidth && fullWidthCharactersUsed ? (
                     <Typography color="error" component="p">
                         You seem to be trying to enter full-width text into the half-width slot.{' '}
@@ -1173,9 +1332,15 @@ export const ConvertDialog = (props: { files: (File | AdaptiveFile)[] }) => {
                         )}
 
                         <FormControlLabel
-                            label={`Use ReplayGain`}
+                            label={dspState.loudnessTarget === null ? `Use ReplayGain` : `Use ReplayGain (replaced by Loudness)`}
                             className={classes.advancedOption}
-                            control={<Checkbox checked={enableReplayGain} onChange={handleToggleReplayGain} />}
+                            disabled={dspState.loudnessTarget !== null}
+                            control={
+                                <Checkbox
+                                    checked={enableReplayGain && dspState.loudnessTarget === null}
+                                    onChange={handleToggleReplayGain}
+                                />
+                            }
                         />
                         <FormControlLabel
                             label={`Gapless`}
@@ -1183,6 +1348,14 @@ export const ConvertDialog = (props: { files: (File | AdaptiveFile)[] }) => {
                             disabled={!encoderSupportState.gapless}
                             control={<Checkbox checked={enableGapless} onChange={handleToggleGapless} />}
                         />
+                    </AccordionDetails>
+                </Accordion>
+                <Accordion className={classes.advancedOptionsAccordion} square={true}>
+                    <AccordionSummary expandIcon={<ExpandMoreIcon />} className={classes.advancedOptionsAccordionSummary}>
+                        DSP Bay: EQ &amp; Loudness{dspSummary ? ` (${dspSummary})` : ''}
+                    </AccordionSummary>
+                    <AccordionDetails className={classes.advancedOptionsAccordionContents}>
+                        <DspPanel previewFile={previewFile} previewTitle={previewTitle} />
                     </AccordionDetails>
                 </Accordion>
             </DialogContent>

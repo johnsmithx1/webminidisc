@@ -9,6 +9,7 @@ import MoreVertIcon from '@mui/icons-material/MoreVert';
 
 import { wipeDisc, formatToHiMD, listContent, selfTest, exportCSV, importCSV, openRecognizeTrackDialog } from '../redux/actions';
 import { actions as appActions } from '../redux/app-feature';
+import { actions as labelBayActions } from '../redux/label-bay-feature';
 import { actions as renameDialogActions, RenameType } from '../redux/rename-dialog-feature';
 import { actions as factoryNoticeDialogActions } from '../redux/factory/factory-notice-dialog-feature';
 import { dispatchQueue } from '../utils';
@@ -42,6 +43,7 @@ import MenuOpenIcon from '@mui/icons-material/MenuOpen';
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
 import StorageIcon from '@mui/icons-material/Storage';
 import CodeIcon from '@mui/icons-material/Code';
+import LabelIcon from '@mui/icons-material/LocalPrintshop';
 
 import { W95TopMenu } from './win95/topmenu';
 import { ExploitCapability } from '../services/interfaces/netmd';
@@ -119,6 +121,11 @@ export const TopMenu = function (props: { tracksSelected?: number[]; onClick?: (
         setMenuAnchorEl(null);
         handleShortcutsClose();
     }, [setMenuAnchorEl, handleShortcutsClose]);
+
+    const handleShowLabelBay = useCallback(() => {
+        dispatch(labelBayActions.setVisible(true));
+        handleMenuClose();
+    }, [dispatch, handleMenuClose]);
 
     const handleShowSettings = useCallback(() => {
         dispatch(appActions.showSettingsDialog(true));
@@ -489,6 +496,15 @@ export const TopMenu = function (props: { tracksSelected?: number[]; onClick?: (
             </MenuItem>
         );
     }
+
+    menuItems.push(
+        <MenuItem key="label-bay" onClick={handleShowLabelBay}>
+            <ListItemIcon className={classes.listItemIcon}>
+                <LabelIcon fontSize="small" />
+            </ListItemIcon>
+            <ListItemText>Label Bay (print labels)</ListItemText>
+        </MenuItem>
+    );
 
     menuItems.push(
         <MenuItem key="settings" onClick={handleShowSettings}>

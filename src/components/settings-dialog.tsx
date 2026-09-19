@@ -336,6 +336,7 @@ export const SettingsDialog = (props: {}) => {
                         <MenuItem value="light">Light</MenuItem>
                         <MenuItem value="dark">Dark</MenuItem>
                         <MenuItem value="system">Device Theme</MenuItem>
+                        <MenuItem value="studio">MD Studio (EL display)</MenuItem>
                     </Select>
                 </SimpleField>
                 <SimpleField name="Stretch Web Minidisc Pro to fill the screen vertically" classes={classes} formControl={true}>

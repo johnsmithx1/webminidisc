@@ -12,6 +12,12 @@ import Typography from '@mui/material/Typography';
 import Link from '@mui/material/Link';
 import Box from '@mui/material/Box';
 import { W95App } from './win95/app';
+import '@fontsource/space-grotesk/400.css';
+import '@fontsource/space-grotesk/500.css';
+import '@fontsource/space-grotesk/700.css';
+import '@fontsource/geist-mono/400.css';
+import '@fontsource/geist-mono/500.css';
+import { LabelBayDialog } from './label-bay-dialog';
 
 const Toc = lazy(() => import('./factory/factory'));
 const Controls = lazy(() => import('./controls'));
@@ -224,6 +230,145 @@ const lightTheme = createTheme({
     ...themeCommons,
 });
 
+// ---- MD Studio Industrial: magnesium chassis + EL backlit LCD -------------------------------
+const STUDIO = {
+    chassis: '#111316',
+    panel: '#1B1C1F',
+    raised: '#232428',
+    hairline: '#2E3035',
+    lime: '#87EF7E',
+    limeHi: '#D8FFCD',
+    peak: '#F6FFBF',
+    lavender: '#AD89F0',
+    text: '#E3E2E6',
+    muted: '#9A9CA3',
+};
+const STUDIO_MONO = "'Geist Mono', ui-monospace, Menlo, monospace";
+const STUDIO_GLOW = '0 0 1px #D8FFCD, 0 0 4px rgba(135,239,126,.85), 0 0 12px rgba(135,239,126,.45)';
+
+const studioTheme = createTheme({
+    studio: true,
+    palette: {
+        mode: 'dark',
+        primary: { light: STUDIO.limeHi, main: STUDIO.lime, dark: '#5DBF55', contrastText: '#0E1A0E' },
+        secondary: { light: '#C9B0F7', main: STUDIO.lavender, dark: '#7E5CC2', contrastText: '#16121F' },
+        warning: { light: '#FBFFE0', main: STUDIO.peak, dark: '#C9CF8F', contrastText: '#1A1C10' },
+        error: { light: '#FFC2AD', main: '#FF9E7A', dark: '#D9714C', contrastText: '#1A0E0A' },
+        info: { light: STUDIO.limeHi, main: STUDIO.lime, dark: '#5DBF55', contrastText: '#0E1A0E' },
+        success: { light: STUDIO.limeHi, main: STUDIO.lime, dark: '#5DBF55', contrastText: '#0E1A0E' },
+        background: { default: STUDIO.chassis, paper: STUDIO.panel },
+        text: { primary: STUDIO.text, secondary: STUDIO.muted, disabled: '#5C5F66' },
+        divider: STUDIO.hairline,
+        action: {
+            active: STUDIO.text,
+            hover: 'rgba(135,239,126,0.06)',
+            hoverOpacity: 0.06,
+            selected: 'rgba(135,239,126,0.12)',
+            selectedOpacity: 0.12,
+            disabled: 'rgba(227,226,230,0.3)',
+            disabledBackground: 'rgba(227,226,230,0.08)',
+            disabledOpacity: 0.38,
+            focus: 'rgba(135,239,126,0.14)',
+            focusOpacity: 0.14,
+            activatedOpacity: 0.2,
+        },
+    },
+    shape: { borderRadius: 4 },
+    typography: {
+        fontFamily: "'Space Grotesk', 'Helvetica Neue', Arial, sans-serif",
+        button: { fontFamily: STUDIO_MONO, fontWeight: 500, letterSpacing: '0.12em' },
+        caption: { fontFamily: STUDIO_MONO, letterSpacing: '0.06em' },
+        overline: { fontFamily: STUDIO_MONO, letterSpacing: '0.2em' },
+    },
+    components: {
+        ...themeCommons.components,
+        MuiCssBaseline: {
+            styleOverrides: {
+                body: { backgroundColor: '#0A0B0D' },
+                '@media (prefers-reduced-motion: reduce)': { '*': { animationDuration: '0s !important' } },
+            },
+        },
+        MuiPaper: {
+            defaultProps: { elevation: 1 },
+            styleOverrides: {
+                root: { backgroundImage: 'none', border: `1px solid ${STUDIO.hairline}` },
+                elevation24: { backgroundImage: 'none !important' },
+            },
+        },
+        MuiButton: {
+            styleOverrides: {
+                containedPrimary: {
+                    boxShadow: '0 0 14px rgba(135,239,126,0.45), inset 0 -3px 0 #5DBF55',
+                    '&:hover': { boxShadow: '0 0 22px rgba(135,239,126,0.6), inset 0 -3px 0 #5DBF55' },
+                },
+                outlined: { borderColor: '#3A3D44' },
+            },
+        },
+        MuiToggleButton: {
+            styleOverrides: {
+                root: {
+                    fontFamily: STUDIO_MONO,
+                    letterSpacing: '0.1em',
+                    borderColor: '#3A3D44',
+                    '&.Mui-selected': {
+                        color: STUDIO.lime,
+                        textShadow: STUDIO_GLOW,
+                        backgroundColor: 'rgba(135,239,126,0.10)',
+                        boxShadow: 'inset 0 -2px 0 #87EF7E',
+                    },
+                },
+            },
+        },
+        MuiLinearProgress: {
+            styleOverrides: {
+                bar: { boxShadow: '0 0 8px rgba(135,239,126,0.8)' },
+            },
+        },
+        MuiTableCell: {
+            styleOverrides: {
+                root: { borderBottomColor: '#25272B' },
+                head: { fontFamily: STUDIO_MONO, fontSize: '0.7rem', letterSpacing: '0.18em', color: STUDIO.muted },
+            },
+        },
+        MuiTableRow: {
+            styleOverrides: {
+                root: {
+                    '&.Mui-selected, &.Mui-selected:hover': {
+                        backgroundColor: 'rgba(135,239,126,0.10)',
+                        boxShadow: `inset 2px 0 0 ${STUDIO.lime}`,
+                    },
+                },
+            },
+        },
+        MuiDialogTitle: {
+            styleOverrides: {
+                root: { fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', fontSize: '1rem' },
+            },
+        },
+        MuiSlider: {
+            styleOverrides: {
+                track: { boxShadow: '0 0 6px rgba(135,239,126,0.7)' },
+                thumb: { borderRadius: 2, width: 18, height: 10 },
+            },
+        },
+        MuiSwitch: {
+            styleOverrides: {
+                switchBase: { '&.Mui-checked + .MuiSwitch-track': { boxShadow: '0 0 8px rgba(135,239,126,0.6)' } },
+            },
+        },
+        MuiTooltip: {
+            styleOverrides: {
+                tooltip: {
+                    fontFamily: STUDIO_MONO,
+                    backgroundColor: '#0B120C',
+                    border: `1px solid ${STUDIO.hairline}`,
+                    color: STUDIO.limeHi,
+                },
+            },
+        },
+    },
+} as any);
+
 const InternalApp = () => {
     const { mainView, loading, pageFullHeight, pageFullWidth } = useShallowEqualSelector((state) => state.appState);
     const { deviceCapabilities } = useShallowEqualSelector((state) => state.main);
@@ -289,6 +434,10 @@ const App = () => {
                 return darkTheme;
             case 'system':
                 return systemIsDarkTheme ? darkTheme : lightTheme;
+            case 'studio':
+                return studioTheme;
+            default:
+                return darkTheme;
         }
     }, [systemIsDarkTheme, colorTheme]);
 
@@ -299,6 +448,7 @@ const App = () => {
     return (
         <ThemeProvider theme={theme}>
             <InternalApp />
+            <LabelBayDialog />
         </ThemeProvider>
     );
 };

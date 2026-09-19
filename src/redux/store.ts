@@ -13,6 +13,8 @@ import songRecognitionProgressDialog from './song-recognition-progress-dialog-fe
 import appState, { actions as appActions, buildInitialState as buildInitialAppState } from './app-feature';
 import localLibrary from './local-library-feature';
 import factory from './factory/factory-feature';
+import dsp from './dsp-feature';
+import labelBay from './label-bay-feature';
 
 import factoryFragmentModeEditDialog from './factory/factory-fragment-mode-edit-dialog-feature';
 import factoryProgressDialog from './factory/factory-progress-dialog-feature';
@@ -55,6 +57,8 @@ const reducer = combineReducers({
     factoryBadSectorDialog,
     appState,
     main,
+    dsp,
+    labelBay,
 });
 
 const resetStateAction = appActions.setMainView.toString();

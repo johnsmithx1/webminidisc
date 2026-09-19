@@ -14,7 +14,7 @@ export interface AppState {
     browserSupported: boolean;
     runningChrome: boolean;
     connectingInProgress: boolean;
-    colorTheme: 'dark' | 'light' | 'system';
+    colorTheme: 'dark' | 'light' | 'system' | 'studio';
     vintageMode: boolean;
     aboutDialogVisible: boolean;
     discProtectedDialogVisible: boolean;
@@ -103,7 +103,7 @@ export const slice = createSlice({
         setConnectingInProgress: (state, action: PayloadAction<boolean>) => {
             state.connectingInProgress = action.payload;
         },
-        setDarkMode: (state, action: PayloadAction<'dark' | 'light' | 'system'>) => {
+        setDarkMode: (state, action: PayloadAction<'dark' | 'light' | 'system' | 'studio'>) => {
             state.colorTheme = action.payload;
             savePreference('colorTheme', state.colorTheme);
         },

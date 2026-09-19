@@ -24,6 +24,9 @@ import { W95Controls } from './win95/controls';
 
 const frames = [MDIcon0, MDIcon1, MDIcon2, MDIcon3];
 
+// MD Studio (EL backlit LCD) treatment, only active in the 'studio' colour theme.
+const isStudio = (theme: any) => !!theme.studio;
+
 const useStyles = makeStyles()((theme) => ({
     container: {
         display: 'flex',
@@ -44,6 +47,24 @@ const useStyles = makeStyles()((theme) => ({
         backgroundColor: theme.palette.background.default,
         minWidth: 150,
         height: 48,
+        ...(isStudio(theme)
+            ? {
+                  backgroundColor: '#081008',
+                  borderRadius: 4,
+                  border: '1px solid #2E3035',
+                  overflow: 'hidden',
+                  boxShadow:
+                      'inset 0 3px 14px #000, inset 0 0 40px rgba(135,239,126,0.07), 0 0 0 3px #1B1C1F, 0 0 0 4px #2E3035, 0 0 26px rgba(135,239,126,0.10)',
+                  '&::after': {
+                      content: '""',
+                      position: 'absolute',
+                      inset: 0,
+                      pointerEvents: 'none',
+                      background:
+                          'linear-gradient(180deg, rgba(255,255,255,.05), transparent 35%), linear-gradient(rgba(0,0,0,.28) 1px, transparent 1px) 0 0 / 3px 3px, linear-gradient(90deg, rgba(0,0,0,.28) 1px, transparent 1px) 0 0 / 3px 3px',
+                  },
+              }
+            : {}),
         [belowDesktop(theme)]: {
             marginLeft: 0,
             marginRight: theme.spacing(2),
@@ -57,6 +78,13 @@ const useStyles = makeStyles()((theme) => ({
         left: 40,
         height: '100%',
         fontFamily: 'LCDDot',
+        ...(isStudio(theme)
+            ? {
+                  color: '#D8FFCD',
+                  textShadow:
+                      '0 0 1px #D8FFCD, 0 0 4px rgba(135,239,126,.85), 0 0 12px rgba(135,239,126,.5), 0 0 28px rgba(135,239,126,.25)',
+              }
+            : {}),
     },
     lcdDisc: {
         position: 'absolute',
@@ -67,7 +95,7 @@ const useStyles = makeStyles()((theme) => ({
         width: 28,
         height: 48,
         '& g': {
-            fill: theme.palette.action.active,
+            fill: isStudio(theme) ? '#87EF7E' : theme.palette.action.active,
         },
     },
     scrollingStatusMessage: {
@@ -111,7 +139,11 @@ const useStyles = makeStyles()((theme) => ({
         backgroundRepeat: 'repeat-x',
         backgroundImage:
             "url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAICAYAAADwdn+XAAABhWlDQ1BJQ0MgcHJvZmlsZQAAKJF9kT1Iw0AcxV9Tix9UBC0i4pChOlkQFREnrUIRKpRaoVUHk0u/oElDkuLiKLgWHPxYrDq4OOvq4CoIgh8gzg5Oii5S4v+SQosYD4778e7e4+4dINRKTDXbxgBVs4xkLCqmM6ti+ysC6EU/ZtApMVOfSyTi8Bxf9/Dx9S7Cs7zP/Tm6lazJAJ9IPMt0wyLeIJ7atHTO+8QhVpAU4nPiUYMuSPzIddnlN855hwWeGTJSyXniELGYb2G5hVnBUIknicOKqlG+kHZZ4bzFWS1VWOOe/IXBrLayzHWaQ4hhEUtIQISMCooowUKEVo0UE0naj3r4Bx1/glwyuYpg5FhAGSokxw/+B7+7NXMT425SMAoEXmz7Yxho3wXqVdv+Prbt+gngfwautKa/XAOmP0mvNrXwEdCzDVxcNzV5D7jcAQaedMmQHMlPU8jlgPcz+qYM0HcLdK25vTX2cfoApKir+A1wcAiM5Cl73ePdHa29/Xum0d8PjEtysaBQHcsAAAAJcEhZcwAALiMAAC4jAXilP3YAAAAHdElNRQfoBRIXCBTPWcirAAAAGXRFWHRDb21tZW50AENyZWF0ZWQgd2l0aCBHSU1QV4EOFwAAABhJREFUKM9jZCAM/uOTZGKgEIwaMBgMAAD0cwEPreO1ugAAAABJRU5ErkJggg==')",
-        filter: theme.palette.mode === 'dark' ? 'invert(1) contrast(0.5)' : 'contrast(0.1)',
+        filter: isStudio(theme)
+            ? 'invert(1) sepia(1) saturate(6) hue-rotate(60deg) drop-shadow(0 0 3px rgba(135,239,126,.8))'
+            : theme.palette.mode === 'dark'
+              ? 'invert(1) contrast(0.5)'
+              : 'contrast(0.1)',
     },
     durationSlowDown: {
         transition: 'flex-grow linear 0.5s',

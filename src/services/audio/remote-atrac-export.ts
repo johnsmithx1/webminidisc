@@ -19,11 +19,15 @@ export class RemoteAtracExportService extends DefaultFfmpegAudioExportService {
         this.originalFileName = file.name;
     }
 
-    async encodeATRAC3({ format, enableReplayGain }: ExportParams): Promise<ArrayBuffer> {
-        const { data } = await this.ffmpegProcess.read(this.inFileName);
+    async encodeATRAC3(parameters: ExportParams): Promise<ArrayBuffer> {
+        const { format } = parameters;
+        const dspApplied = !!parameters.dsp;
+        // DSP output is already loudness-managed, so never let the server apply ReplayGain on top.
+        const enableReplayGain = dspApplied ? false : parameters.enableReplayGain;
+        const { data, name } = await this.getSourceForExternalEncoder(parameters, this.originalFileName);
 
         const payload = new FormData();
-        payload.append('file', new Blob([data.buffer]), this.originalFileName);
+        payload.append('file', new Blob([data.buffer as ArrayBuffer]), name);
         const encodingURL = new URL(this.address);
         if (!encodingURL.pathname.endsWith('/')) encodingURL.pathname += '/';
         encodingURL.pathname += 'transcode';

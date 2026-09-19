@@ -34,6 +34,7 @@ import { getSimpleServices, ServiceConstructionInfo } from '../services/interfac
 import { AudioServices } from '../services/audio-export-service-manager';
 import { checkFactoryCapability, initializeFactoryMode } from './factory/factory-actions';
 import { ExportParams } from '../services/audio/audio-export';
+import { DspParams } from '../services/audio/dsp';
 import { LibraryServices } from '../services/library-services';
 import { s16LEToSamplesArray, Shazam } from 'shazam-api';
 
@@ -1274,7 +1275,7 @@ export function flushDevice() {
 export function convertAndUpload(
     files: TitledFile[],
     format: Codec,
-    additionalParameters: { enableReplayGain: boolean; enableGapless: boolean }
+    additionalParameters: { enableReplayGain: boolean; enableGapless: boolean; dsp?: DspParams }
 ) {
     return async function (dispatch: AppDispatch, getState: () => RootState) {
         const deviceCapabilities = getState().main.deviceCapabilities;
@@ -1465,7 +1466,9 @@ export function convertAndUpload(
                     // This is not an ATRAC file
                     converted[j] = new Promise(async (resolve, reject) => {
                         let audioExportFormat: ExportParams['format'];
-                        switch (format.codec) {
+                        // Per-track recording mode (Disc Fit Planner) overrides the batch mode.
+                        const trackFormat: Codec = f.targetCodec ?? format;
+                        switch (trackFormat.codec) {
                             case 'SPS':
                             case 'SPM':
                                 audioExportFormat = {
@@ -1475,9 +1478,9 @@ export function convertAndUpload(
                                 break;
                             default:
                                 audioExportFormat = {
-                                    codec: format.codec,
-                                    bitrate: format.bitrate,
-                                };
+                                    codec: trackFormat.codec,
+                                    bitrate: trackFormat.bitrate,
+                                } as ExportParams['format'];
                                 break;
                         }
 
@@ -1485,6 +1488,10 @@ export function convertAndUpload(
                             format: audioExportFormat,
                             enableReplayGain: additionalParameters.enableReplayGain,
                             writeGapless: additionalParameters.enableGapless && j !== files.length - 1,
+                            dsp:
+                                additionalParameters.dsp && audioExportService?.supportsDsp(audioExportFormat.codec as any)
+                                    ? additionalParameters.dsp
+                                    : undefined,
                         };
 
                         let data: ArrayBuffer;
@@ -1594,7 +1601,7 @@ export function convertAndUpload(
             } else {
                 try {
                     // SPS / SPM was filtered out before
-                    const formatOverride: Codec = (file.forcedEncoding as Codec | null) ?? format;
+                    const formatOverride: Codec = (file.forcedEncoding as Codec | null) ?? file.targetCodec ?? format;
                     await netmdService?.upload(
                         usesHiMDTitles ? { title, artist: file.artist, album: file.album } : halfWidthTitle,
                         fullWidthTitle,

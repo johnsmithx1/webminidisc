@@ -20,10 +20,11 @@ export class LocalAtracExportService extends DefaultFfmpegAudioExportService {
     }
 
     async encodeATRAC3(params: ExportParams): Promise<ArrayBuffer> {
-        const { data } = await this.ffmpegProcess.read(this.inFileName);
+        const { data, name } = await this.getSourceForExternalEncoder(params, this.inFileName);
         const arrayBuffer = data.buffer as ArrayBuffer;
+        const bridgeParams = params.dsp ? { ...params, enableReplayGain: false } : params;
 
-        const response = await window.native!.invokeLocalEncoder!(this.ffmpeg, this.exe, arrayBuffer, this.inFileName, params);
+        const response = await window.native!.invokeLocalEncoder!(this.ffmpeg, this.exe, arrayBuffer, name, bridgeParams);
         if (!response) throw new Error("Couldn't invoke the local encoder!");
 
         const content = new Uint8Array(response);
