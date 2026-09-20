@@ -1,6 +1,6 @@
 // Studio MD fork UI shell changes: 2026-09-19. Upstream device behavior remains unchanged.
 import React, { useMemo, lazy, Suspense } from 'react';
-import { belowDesktop, forAnyDesktop, forWideDesktop, useShallowEqualSelector, useThemeDetector } from '../frontend-utils';
+import { belowDesktop, forAnyDesktop, forWideDesktop, useDispatch, useShallowEqualSelector, useThemeDetector } from '../frontend-utils';
 
 import CssBaseline from '@mui/material/CssBaseline';
 import Backdrop from '@mui/material/Backdrop';
@@ -11,6 +11,8 @@ import { makeStyles } from 'tss-react/mui';
 import Paper from '@mui/material/Paper';
 import Box from '@mui/material/Box';
 import './studio-theme.css';
+import { LabelBayDialog } from './label-bay-dialog';
+import { actions as labelBayActions } from '../redux/label-bay-feature';
 
 const Toc = lazy(() => import('./factory/factory'));
 const Controls = lazy(() => import('./controls'));
@@ -131,19 +133,19 @@ const darkTheme = createTheme({
     palette: {
         mode: 'dark',
         primary: {
-            light: '#6ec6ff',
-            main: '#27e2c3',
-            dark: '#14a891',
-            contrastText: '#fff',
+            light: '#d8ffcd',
+            main: '#87ef7e',
+            dark: '#5dbf55',
+            contrastText: '#0e1a0e',
         },
         secondary: {
-            light: '#d7adff',
-            main: '#a66cff',
-            dark: '#6d3de8',
+            light: '#dcd0f2',
+            main: '#ad89f0',
+            dark: '#8065b3',
         },
         background: {
-            default: '#080b12',
-            paper: '#101722',
+            default: '#131314',
+            paper: '#1b1c1f',
         },
         action: {
             active: '#fff',
@@ -228,8 +230,9 @@ const lightTheme = createTheme({
 });
 
 const InternalApp = () => {
+    const dispatch = useDispatch();
     const { mainView, loading, pageFullHeight, pageFullWidth } = useShallowEqualSelector((state) => state.appState);
-    const { deviceCapabilities } = useShallowEqualSelector((state) => state.main);
+    const { deviceCapabilities, deviceName, disc } = useShallowEqualSelector((state) => state.main);
     const { classes, cx } = useStyles();
     const showStudioDemo = import.meta.env.DEV && new URLSearchParams(window.location.search).get('demo') === '1';
 
@@ -253,8 +256,16 @@ const InternalApp = () => {
                                 <div className="studio-brand-caption">DISC CONTROL SYSTEM</div>
                             </div>
                         </div>
-                        <div className="studio-header-status"><span className="studio-status-dot" /> READY FOR DEVICE</div>
+                        {mainView === 'MAIN' ? (
+                            <div className="studio-header-device"><b>{deviceName || 'NETMD DECK'}</b><span>NETMD USB · TYPE-R</span></div>
+                        ) : null}
+                        <div className="studio-header-status"><span className="studio-status-dot" /> {mainView === 'MAIN' ? 'DECK ONLINE' : 'READY FOR DEVICE'}</div>
                     </header>
+                    {mainView === 'MAIN' ? (
+                        <nav className="studio-connected-nav" aria-label="Studio bays">
+                            <span className="is-active">DISC TOC &amp; BURNER</span><span>TITLING &amp; EDIT</span><span>HARDWARE EXPLORER</span><span>DSP BAY <b>NEW</b></span><button type="button" onClick={() => dispatch(labelBayActions.setVisible(true))}>LABEL BAY</button><span>EXPLOIT / HOMEBREW</span><span>AUDIO CONVERTER</span><span>DEVICE HANDSHAKE</span>
+                        </nav>
+                    ) : null}
                     <Paper
                         data-studio-surface="true"
                         className={cx(classes.paper, {
@@ -298,6 +309,7 @@ const App = () => {
     return (
         <ThemeProvider theme={theme}>
             <InternalApp />
+            <LabelBayDialog />
         </ThemeProvider>
     );
 };

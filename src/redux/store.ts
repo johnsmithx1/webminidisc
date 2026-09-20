@@ -21,6 +21,7 @@ import factoryEditOtherValuesDialog from './factory/factory-edit-other-values-di
 import factoryBadSectorDialog from './factory/factory-bad-sector-dialog-feature';
 
 import main from './main-feature';
+import labelBay from './label-bay-feature';
 import { BatchAction, batchActions, batchDispatchMiddleware } from 'redux-batched-actions';
 
 const errorCatcher: Middleware = (store) => (next) => async (action) => {
@@ -36,6 +37,7 @@ const errorCatcher: Middleware = (store) => (next) => async (action) => {
 
 const reducer = combineReducers({
     contextMenu,
+    labelBay,
     localLibrary,
     renameDialog,
     otherDeviceDialog,

@@ -508,6 +508,7 @@ export const Main = (props: {}) => {
 
     return (
         <React.Fragment>
+            <div className="studio-connected-workspace">
             <Box className={classes.headBox}>
                 <Typography component="h1" variant="h4">
                     {deviceName || `Loading...`}
@@ -583,6 +584,8 @@ export const Main = (props: {}) => {
                     `No disc loaded`
                 )}
             </Typography>
+            <div className="studio-connected-grid">
+            <div className="studio-connected-left">
             <Toolbar
                 className={cx(classes.toolbar, {
                     [classes.toolbarHighlight]: selectedCount > 0 || selectedGroupsCount > 0,
@@ -800,6 +803,24 @@ export const Main = (props: {}) => {
                 </MenuItem>
                 <MenuItem onClick={handleOpenLocalLibrary}>Upload from library</MenuItem>
             </Menu>
+            </div>
+            <aside className="studio-connected-sidecar" aria-label="Studio edit bays">
+                <section className="studio-sidecar-panel studio-sidecar-editor">
+                    <div className="studio-sidecar-heading"><b>TRACK {String((selected[0] ?? deviceStatus?.track ?? 0) + 1).padStart(2, '0')} · TITLE EDITOR</b><span>UTOC SLOT 0x{String((selected[0] ?? deviceStatus?.track ?? 0) + 4).padStart(2, '0')}</span></div>
+                    <label>TITLE · ASCII<input value={tracks.find((track) => track.index === (selected[0] ?? deviceStatus?.track ?? 0))?.title ?? ''} readOnly /></label>
+                    <label>ARTIST<input value={tracks.find((track) => track.index === (selected[0] ?? deviceStatus?.track ?? 0))?.artist ?? 'Unknown Artist'} readOnly /></label>
+                    <div className="studio-sidecar-lcd"><small>DECK LCD PREVIEW · 12 CHR WINDOW</small><strong>{String((selected[0] ?? deviceStatus?.track ?? 0) + 1).padStart(2, '0')} {tracks.find((track) => track.index === (selected[0] ?? deviceStatus?.track ?? 0))?.title?.slice(0, 12) ?? 'NO TRACK'}▸</strong></div>
+                    <button type="button" className="studio-sidecar-action" onClick={handleRenameActionClick} disabled={selectedCount !== 1 || !deviceCapabilities.metadataEdit}>EDIT TITLE</button>
+                </section>
+                <section className="studio-sidecar-panel studio-sidecar-dsp">
+                    <div className="studio-sidecar-heading"><b>PRE-ENCODE DSP</b><span>EQ ON · MD LOUDNESS</span></div>
+                    <div className="studio-sidecar-meter">{Array.from({ length: 24 }, (_, index) => <i key={index} style={{ height: `${24 + ((index * 23) % 66)}%` }} />)}</div>
+                    <button type="button" className="studio-sidecar-action">OPEN DSP BAY →</button>
+                </section>
+                <section className="studio-sidecar-panel studio-sidecar-jog"><div className="studio-jog-dial"><span /></div><div><b>JOG · TRACK SELECT</b><span>↻ NEXT · ↺ PREV</span><span>PUSH = EDIT TITLE</span><span>HOLD = MOVE TRACK</span></div></section>
+            </aside>
+            </div>
+            </div>
 
             <DiscProtectedDialog />
             <UploadDialog />

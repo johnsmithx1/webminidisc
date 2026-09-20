@@ -58,7 +58,7 @@ const useStyles = makeStyles<
         marginLeft: theme.spacing(-0.5),
     },
     formatBadge: {
-        color: 'white',
+        color: '#553193',
         height: theme.spacing(2.5),
         zIndex: 1,
         flexWrap: 'wrap',
@@ -66,7 +66,7 @@ const useStyles = makeStyles<
         minWidth: theme.spacing(2.5),
         boxSizing: 'border-box',
         alignItems: 'center',
-        fontWeight: 500,
+        fontWeight: 700,
         alignContent: 'center',
         borderRadius: '10px',
         flexDirection: 'row',
